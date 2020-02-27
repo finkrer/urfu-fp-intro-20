@@ -58,7 +58,7 @@ a, b, m :: Int -- такая запись означает, что a, b, m им�
 -- ^ термы одного типа можно объявлять через запятую.
 a = 50
 b = 564 + 123
-m = 34 * 50
+m = 34 * 50 :: Int
 -- ^ термы определяются через уравнения
 
 {-
@@ -247,7 +247,13 @@ someArithmeticCalculations =
     - если n < 0, то "negative"
 -}
 tellSign :: Int -> String
-tellSign n = error "not implemented"
+tellSign n = 
+  if n == 0 
+  then "zero" 
+  else 
+    if n > 0 
+    then "positive" 
+    else "negative" 
 
 {-
   `howManyDigits` возвращает количество цифр целого числа `n`:
@@ -256,7 +262,14 @@ tellSign n = error "not implemented"
     - если n >= 100, то "three-digit or more"
 -}
 howManyDigits :: Int -> String
-howManyDigits n = error "not implemented"
+howManyDigits n = 
+  let absN = abs(n) in
+  if absN < 10
+  then "single" 
+  else 
+    if absN < 100
+    then "two-digit" 
+    else "three-digit or more"
 
 {-
   `describeNumber` возвращает полное описание целого числа, используя
@@ -267,7 +280,7 @@ howManyDigits n = error "not implemented"
     - если n >= 100, то "positive three-digit or more"
 -}
 describeNumber :: Int -> String
-describeNumber n = error "not implemented"
+describeNumber n = tellSign n ++ " " ++ howManyDigits n
 
 -- </Задачи для самостоятельного решения>
 
@@ -303,7 +316,9 @@ makeZero x =
   больших чисел.
 -}
 factorial :: Integer -> Integer
-factorial n = error "not implemented"
+factorial 0 = 1
+factorial n = factorial(n - 1) * n
+
 
 {-
   На вход приходит целое число. Необходимо вернуть количество цифр:
@@ -312,7 +327,10 @@ factorial n = error "not implemented"
     - если n = 144545, то 6
 -}
 digitsCount :: Int -> Int
-digitsCount n = error "not implemented"
+digitsCount n
+  | n < 0 = digitsCount (-n)
+  | n < 10 = 1
+  | otherwise = digitsCount (div n 10) + 1
 
 -- </Задачи для самостоятельного решения>
 
