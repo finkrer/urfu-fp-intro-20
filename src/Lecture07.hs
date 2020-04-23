@@ -72,10 +72,13 @@ instance Show Expr where
     Plus a b -> separate a b "+"
     Minus a b -> separate a b "-"
     Mult a b -> separate a b "*"
-    UnaryMinus x -> "-(" ++ show x ++ ")"
+    UnaryMinus x -> "-" ++ wrap x
     Abs x -> "|" ++ show x ++ "|"
     where
-      separate a b sep = show a ++ " " ++ sep ++ " " ++ show b
+      separate a b sep = wrap a ++ " " ++ sep ++ " " ++ wrap b
+      wrap a@(Number x) = show a
+      wrap a@(Abs x) = show a
+      wrap a = "(" ++ show a ++ ")"
 
 {-
   Реализуйте instance Semigroup для вектора:
