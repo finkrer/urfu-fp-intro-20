@@ -1,7 +1,9 @@
+{-# LANGUAGE RecordWildCards #-}
+
 module Lecture10.Reader where
 
-import Data.List
 import Data.Maybe
+import Data.List
 import Control.Monad.Reader
 import Prelude hiding (id)
 
@@ -62,18 +64,36 @@ persons =
 
 -- Поиск персоны по номеру
 findById :: PersonId -> Reader [Person] (Maybe Person)
-findById pId = error "not implemented"
+findById pId = ask >>= return . find ((pId==) . id)
 
 processSingle :: Person -> String
-processSingle p = error "not implemented"
+processSingle Person{..} =
+  "Уважаем" ++ intercalate " " [ending, name, surname] ++ "!\nРазрешите предложить Вам наши услуги."
+  where
+    ending = case sex of
+      Male -> "ый"
+      Female -> "ая"
 
 processPair :: Person -> Person -> String
-processPair husband wife = error "not implemented"
+processPair Person{name=hName, surname=hSurname} Person{name=wName, surname=wSurname} =
+  intercalate " " ["Уважаемые", hName, hSurname, "и", wName, wSurname] ++ "!\nРазрешите предложить вам наши услуги."
 
 processPerson :: PersonId -> Reader [Person] (Maybe String)
-processPerson pId = error "not implemented"
+processPerson pId = do
+  person <- findById pId
+  let sId = join $ marriedBy <$> person
+  spouse <- case sId of
+    (Just sId) -> findById sId
+    _ -> return Nothing
+  return $ case (person, spouse) of
+    (Nothing, _) -> Nothing
+    (person, Nothing) -> liftM processSingle person
+    (person, spouse) -> liftM2 processPair person spouse
+
 
 processPersons :: [PersonId] -> [Maybe String]
-processPersons personIds = error "not implemented"
+processPersons personIds = do
+  pId <- personIds
+  return . runReader (processPerson pId) $ persons
 
 -- </Задачи для самостоятельного решения>
