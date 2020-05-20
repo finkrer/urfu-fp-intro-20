@@ -1,5 +1,3 @@
-{-# LANGUAGE RecordWildCards #-}
-
 module Lecture10.Reader where
 
 import Data.Maybe

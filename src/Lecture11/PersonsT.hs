@@ -4,6 +4,7 @@ module Lecture11.PersonsT where
 
 import Data.List
 import Data.Maybe
+import Data.Functor
 import Control.Monad.Reader
 import Control.Monad.State
 import Control.Monad.Writer
@@ -35,22 +36,43 @@ emptyStats :: PersonSearchStats
 emptyStats = PersonSearchStats 0 0
 
 newtype PersonsT a = PersonsT
-  { runPersonsT :: a }
+  { runPersonsT :: (ReaderT [Person] (StateT PersonSearchStats (Writer [String])) a) }
   deriving
     ( Functor
     , Applicative
     , Monad
---  ...
+    , MonadState PersonSearchStats
+    , MonadReader [Person]
+    , MonadWriter [String]
     )
 
 runPersons :: PersonsT a -> ((a, PersonSearchStats), [String])
-runPersons p = error "not implemented"
+runPersons = runWriter . flip runStateT emptyStats . flip runReaderT persons . runPersonsT 
 
 findById :: PersonId -> PersonsT (Maybe Person)
-findById pId = error "not implemented"
+findById pId = do
+  ps <- ask
+  let person = find ((pId==) . id) persons
+  case person of
+    (Just Person{..}) -> tell [intercalate " " ["Found person with id", show id, ": ", surname, name]]
+    _ -> tell [intercalate " " ["Person with id", show pId, "not found"]]
+  return person
 
 processPerson :: PersonId -> PersonsT (Maybe String)
-processPerson pId = error "not implemented"
+processPerson pId = do
+  put emptyStats
+  person <- findById pId
+  let sId = join $ marriedBy <$> person
+  spouse <- case sId of
+    (Just sId) -> findById sId
+    _ -> return Nothing
+  case (person, spouse) of
+    (Nothing, _) -> return Nothing
+    (person, Nothing) -> modify addSingle $> liftM processSingle person
+    (person, spouse) -> modify addMarried $> liftM2 processPair person spouse
+  where
+    addSingle stats@(PersonSearchStats _ s) = stats {singlePersonsCount = s + 1}
+    addMarried stats@(PersonSearchStats m _) = stats {marriedPersonsCount = m + 1}
 
 {-
   Функция должна выводить на экран:
@@ -60,6 +82,14 @@ processPerson pId = error "not implemented"
   Записывать в "persons.log" общий лог всех поисков.
 -}
 processPersons :: [PersonId] -> IO ()
-processPersons personIds = error "not implemented"
+processPersons personIds = do
+    let ((results, stats), logs) = runPersons $ mapM (\p -> do
+                                                              result <- processPerson p
+                                                              return (p, result)
+                                                     ) personIds
+    mapM_ (\(id, result) ->
+      putStrLn $ intercalate " " ["Result for id", show id, "\n", show result]) results
+    putStrLn $ "Statistics:\n" ++ show stats
+    writeFile "persons.log" $ show logs
 
 -- </Задачи для самостоятельного решения>
