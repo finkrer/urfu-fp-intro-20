@@ -11,7 +11,7 @@ import Servant.API
 import GHC.Generics
 
 import DB.MovieSession
-import DB.Seat
+import DB.Seat (SeatId)
 import DB.Internal
 
 {-
@@ -61,3 +61,16 @@ tryBook
   => BookingId
   -> m Bool
 tryBook = undefined
+
+getBookings :: DBMonad m => BookingId -> m [Booking]
+getBookings bId = runSQL $ \conn ->
+  query conn "SELECT id, seat_id, movie_session_id, is_preliminary, created_at FROM bookings WHERE id = ?" bId
+
+delete :: DBMonad m => Booking -> m ()
+delete booking = runSQL $ \conn ->
+  execute conn "DELETE FROM bookings WHERE id = ?" (bookingId booking)
+
+checkout :: DBMonad m => Booking -> m ()
+checkout booking = runSQL $ \conn -> do
+  execute conn "UPDATE bookings SET is_preliminary = false WHERE id = ?" (bookingId booking)
+  execute conn "UPDATE seats SET available = false WHERE id = ?" (seatId booking)

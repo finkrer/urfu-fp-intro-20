@@ -23,4 +23,4 @@ createPreliminary
 createPreliminary msId seatId = runSQL $ \conn -> do
   execute conn "INSERT INTO bookings (seat_id, movie_session_id, is_preliminary) values (?, ?, true)" (seatId, msId)
   query conn ("SELECT id, seat_id, movie_session_id, is_preliminary, created_at " <>
-    "from bookings where movie_session_id = ? and seat_id = ?") (msId, seatId)
+    "from bookings where movie_session_id = ? and seat_id = ?") (seatId, msId)
