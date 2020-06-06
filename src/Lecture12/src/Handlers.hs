@@ -39,11 +39,11 @@ checkoutBooking bId =
       if (not $ isPreliminary booking)
         then return "Booking was already checked out"
         else do
-          delete booking
           let bookingTime = createdAt booking
           currentTime <- liftIO $ getCurrentTime
           if diffUTCTime currentTime bookingTime >= bookingDuration
-            then return "Booking is more than 10 minutes old and has expired"
+            then delete booking
+              >> return "Booking is more than 10 minutes old and has expired"
             else checkout booking
               >> return "Booking checked out successfully"
 
